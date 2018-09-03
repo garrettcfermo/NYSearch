@@ -27,6 +27,7 @@
       border: 1px solid lightgrey;
       border-radius: 10px;
       background-color: lightgry;
+      margin-top: 20px;
     }
 
     .row {
@@ -35,6 +36,14 @@
 
     form {
       width: 100%;
+    }
+
+    .btn-primary {
+      background-color: darkblue;
+    }
+
+    footer {
+      text-align: center;
     }
   </style>
 
@@ -60,28 +69,45 @@
       <form>
         <div class="form-group">
           <label>Search Term:</label>
-          <input class="form-control" id="">
+          <input class="form-control" id="searchTerm">
         </div>
         <label>Number of Records to Retrieve</label>
-        <select class="form-control" id="">
+        <select class="form-control" id="numberRecords">
           <option>1</option>
           <option>5</option>
           <option>10</option>
         </select>
         <div class="form-group">
           <label>Start Year (Optional):</label>
-          <input class="form-control" id="">
+          <input class="form-control" id="startYear">
         </div>
         <div class="form-group">
           <label>End Year (Optional):</label>
-          <input class="form-control" id="">
+          <input class="form-control" id="endYear">
         </div>
-        <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
-        <button type="submit" class="btn btn-primary"><i class="fas fa-trash-alt"></i> Clear Results</button>
+        <button type="submit" class="btn btn-primary submit-btn"><i class="fas fa-search"></i> Search</button>
+        <button type="submit" class="btn btn-primary clear-btn"><i class="fas fa-trash-alt"></i> Clear Results</button>
       </form>
     </div>
-
   </div>
+
+  <div class="container parameters">
+    <div class="row">
+      <h5> <i class="fas fa-table"></i> Top Articles</h5>
+    </div>
+    <hr>
+    <div class="row">
+      <div class="col-md-12">
+        <div class="articles"></div>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+  <footer>
+    <p>Made with lots and lots of <i class="fas fa-heart"></i> </p>
+  </footer>
+
 
 
   <!-- JavaScripts -->
@@ -92,32 +118,74 @@
     crossorigin="anonymous"></script>
   <script>
 
-    var url = "https://api.nytimes.com/svc/search/v2/articlesearch.json";
-    url += '?' + $.param({
-      'api-key': "9ab23fefa0f34871a01ce903c10dce31",
-      'q': "Surfing",
-      'begin_date': "20180101",
-      'end_date': "20180701"
-    });
+    $('.submit-btn').on('click', function () {
+      event.preventDefault()
 
-    $.get(url)
-      .then(function (data) {
-        console.log(data.response.docs)
+      let term = $('#searchTerm').val().trim()
+      let numRecords = $('#numberRecords').val().trim() - 1
+      let startTime = ($('#startYear').val().trim()) + '0101'
+      let endTime = ($('#endYear').val().trim()) + '0101'
 
-        for (let i = 0; i <= 5; i++) {
-          // Article Title 
-          console.log(data.response.docs[i].headline.main)
-          // Article Author
-          console.log(data.response.docs[i].byline.original)
-          // Article Pubish Date
-          console.log(data.response.docs[i].pub_date)
-          // Article Web URL
-          console.log(data.response.docs[i].web_url)
-        }
-      })
-      .catch(function (e) { console.log(e) })
+      if (startTime === "0101") {
+        startTime = "18000101"
+      }
 
+      if (endTime === "0101") {
+        endTime = "20500101"
+      }
 
+      var url = "https://api.nytimes.com/svc/search/v2/articlesearch.json";
+      url += '?' + $.param({
+        'api-key': "9ab23fefa0f34871a01ce903c10dce31",
+        'q': `${term}`,
+        'begin_date': `${startTime}`,
+        'end_date': `${endTime}`
+      });
+
+      $.get(url)
+        .then(function (data) {
+
+          for (let i = 0; i <= numRecords; i++) {
+            //Article Titlet
+            if (data.response.docs[i].headline.main) {
+              title = data.response.docs[i].headline.main
+            }
+            // Article Author
+            if (data.response.docs[i].byline.original) {
+              author = data.response.docs[i].byline.original
+            }
+            // Article Pubish Date
+            if (data.response.docs[i].pub_date) {
+              date = data.response.docs[i].pub_date
+            }
+            // Article Web URL
+            if (data.response.docs[i].web_url) {
+              website = (data.response.docs[i].web_url)
+            }
+
+            $('.articles').append(`
+            <div class="article">
+               <h3>${i + 1}) ${title}</h3>
+               <h5>${author}</h5>
+               <h6>${date}</h6>
+                <a href="${website}" target="_blank"> Link to Read Article</a>
+                <hr>
+                </div>
+            `)
+          }
+        })
+        .catch(function (e) { console.log(e) })
+
+      $('#searchTerm').val('')
+      $('#numberRecords').val(1)
+      $('#startYear').val('')
+      $('#endYear').val('')
+
+    })
+    $('.clear-btn').on('click', function () {
+      event.preventDefault()
+      $('.articles').empty()
+    })
   </script>
 </body>
 
